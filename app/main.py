@@ -1,37 +1,58 @@
 import pygame
 import numpy as np
+import sys
+from typing import Tuple
 
 # imports class
-import particle
-import world
+from world import World
 
 WIDTH: int = 1280
 HEIGHT: int = 720
 SIZE: int = 20
 
-WORLD: World = World(WIDTH, HEIGHT, 1)
-
-def main():
-    screen, clock = init()
-    loop(screen, clock)
-
-def init():    
-    print("Initialisation")
+def init() -> Tuple[pygame.Surface, pygame.time.Clock]:    
+    print("Initialisation...")
     pygame.init()
-    pygame.set_caption("JEU DE LA VIE :D")
-    screen = pygame.display.set_mode((WIDTH, HEIGHT))
-    clock = pygame.time.Clock()
+    pygame.display.set_caption("JEU DE LA VIE :D")
+    
+    screen: pygame.Surface = pygame.display.set_mode((WIDTH, HEIGHT))
+    clock: pygame.time.Clock = pygame.time.Clock()
+    
     return screen, clock
 
+def main() -> None:
+    screen, clock = init()
+    
+    world_simulation: World = World(WIDTH, HEIGHT, SIZE)
+    
+    running: bool = True
+    paused: bool = False
 
-def loop(screen, clock):
-    while True:
-        update()
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+            
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_SPACE:
+                    paused = not paused
+                if event.key == pygame.K_q:
+                    running = False
+                    
+
+        if not paused:
+            world_simulation.update()
+        
+        screen.fill((0, 0, 0))
+        world_simulation.draw(screen)
+        
+        pygame.display.flip()
+        
         clock.tick(60)
 
-
-def update():
-    print("update")
+    pygame.quit()
+    sys.exit()
     
 
-main()
+if __name__ == "__main__":
+    main()
