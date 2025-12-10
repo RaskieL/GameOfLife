@@ -6,14 +6,14 @@ from typing import Tuple
 # imports class
 from world import World
 
-WIDTH: int = 1920
-HEIGHT: int = 1080
+WIDTH: int = 1280
+HEIGHT: int = 720
 SIZE : int = 5
 
 def init() -> Tuple[pygame.Surface, pygame.time.Clock]:    
     print("Initialisation...")
     pygame.init()
-    pygame.display.set_caption("JEU DE LA VIE ;-D")
+    pygame.display.set_caption("JEU DE LA VIE D:")
     
     screen: pygame.Surface = pygame.display.set_mode((WIDTH, HEIGHT))
     clock: pygame.time.Clock = pygame.time.Clock()
