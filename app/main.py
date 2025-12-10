@@ -45,6 +45,8 @@ def main() -> None:
         
         screen.fill((0, 0, 0))
         world_simulation.draw(screen)
+
+        
         
         pygame.display.flip()
         
