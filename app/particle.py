@@ -1,16 +1,11 @@
+from typing import Tuple
+
 class Particle:
     
-    BLACK = (0, 0, 0)
-    GRAY = (50, 50, 50)
-    WHITE = (255, 255, 255)
-    
-    pos_x: int
-    pos_y: int
+    COLOR_ALIVE: Tuple[int, int, int] = (255, 255, 255)
+    COLOR_DEAD: Tuple[int, int, int] = (0, 0, 0)
 
-    value: bool
-    
-
-    def __init__(self, posx, posy, val):
-        pos_x = posx
-        pos_y = posy
-        value = val
+    def __init__(self, posx: int, posy: int, alive: bool = False) -> None:
+        self.posx: int = posx
+        self.posy: int = posy
+        self.alive: bool = alive
