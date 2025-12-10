@@ -1,5 +1,5 @@
 import pygame
-from random import random as rnd
+import random
 from typing import List
 from particle import Particle
 from star import Star
@@ -28,38 +28,78 @@ class World:
         self.grid[pos_y][pos_x] = star
         for dx in range(-star.radius+1,star.radius):
             for dy in range(-star.radius+1,star.radius):
-                if (dx == 0 and dy == 0) or (abs(dx) == 2 and abs(dy) == 2):
+                if (dx == 0 and dy == 0) or (abs(dx) == star.radius-1 and abs(dy) == star.radius-1):
                     continue
-                self.grid[pos_y+dy][pos_x+dx] = Star(0,0)
+                if pos_y + dy >= 0 and pos_y + dy < self.rows and pos_x + dx >= 0 and pos_x + dx < self.cols:
+                    self.grid[pos_y+dy][pos_x+dx] = Star(0,0,pos_x+dx,pos_y+dy)
         
     def init_world(self) -> None:
-        alive_perc = 0.2
+        alive_perc = 0.5
         alive = 0
         for y in range(len(self.grid)):
             row = self.grid[y]
             for x in range(len(row)):
                 particle = row[x]
-                particle.alive = True if rnd() < alive_perc else False 
+                particle.alive = True if random.random() < alive_perc else False 
                 if particle.alive:
                     alive += 1
 
-        star: Star = Star(1, 3)
-        self.stars.append(star)
 
-        # placing star
-        middle_x = self.cols//2
-        middle_y = self.rows//2
+        star: Star = Star(2, 4, random.randint(0, self.cols-1), random.randint(0, self.rows-1))
+        star2: Star = Star(1, 3, random.randint(0, self.cols-1), random.randint(0, self.rows-1))
+        star3: Star = Star(0.5, 2, random.randint(0, self.cols-1), random.randint(0, self.rows-1))
+        self.stars.append(star)
+        self.stars.append(star2)
+        self.stars.append(star3)
 
         for star in self.stars:
-            self.place_star(star,middle_x,middle_y)
+            self.place_star(star,star.pos_x,star.pos_y)
 
         total = self.cols * self.rows
         print(f"Alive cells: {alive}, Dead cells: {total - alive}, Percentage alive: {alive / total * 100}%")
 
+    def handle_star_physics(self):
+        for i, s1 in enumerate(self.stars):
+            s1.ax = 0
+            s1.ay = 0
+            
+            for j, s2 in enumerate(self.stars):
+                if i == j: continue
+
+                dx = s2.x - s1.x
+                dy = s2.y - s1.y
+                dist_sq = dx*dx + dy*dy
+                dist = math.sqrt(dist_sq)
+
+                if dist < 10: dist = 10
+
+                if dist_sq == 0:
+                    dist_sq = 1
+                force = s2.mass / dist_sq
+
+                s1.ax += (dx / dist) * force
+                s1.ay += (dy / dist) * force
+
+            s1.vx += s1.ax
+            s1.vy += s1.ay
+            
+            s1.x += s1.vx
+            s1.y += s1.vy
+
+            if s1.x < 0 or s1.x >= self.cols:
+                s1.vx *= -0.7
+                s1.x = max(0, min(s1.x, self.cols - 1))
+            
+            if s1.y < 0 or s1.y >= self.rows:
+                s1.vy *= -0.7
+                s1.y = max(0, min(s1.y, self.rows - 1))
+
+            s1.pos_x = int(s1.x)
+            s1.pos_y = int(s1.y)
+
+
     def handle_particle_movement(self) -> None:
-        middle_x = self.cols // 2
-        middle_y = self.rows // 2
-        
+        self.handle_star_physics()
         next_grid: List[List[Particle]] = [[Particle(False) for _ in range(self.cols)] for _ in range(self.rows)]
 
         for y in range(self.rows):
@@ -76,24 +116,21 @@ class World:
                 particle.ay = 0
 
                 for star in self.stars:
-                    dx = middle_x - x
-                    dy = middle_y - y
+                    dx = star.x - x
+                    dy = star.y - y
                     dist_sq = dx*dx + dy*dy
                     dist = math.sqrt(dist_sq)
 
                     if dist < 5: dist = 5
                     
-                    force = star.mass / (dist_sq * 1)
+                    force = star.mass / dist_sq
                     
-                    # Vecteurs normalisés * force
                     particle.ax += (dx / dist) * force
                     particle.ay += (dy / dist) * force
 
-                # 3. Application Mouvement + Frottements
                 particle.vx += particle.ax
                 particle.vy += particle.ay
-                
-                particle.vx *= 0.95
+                particle.vx *= 0.95 # Frottements
                 particle.vy *= 0.95
 
                 nx = int(x + particle.vx)
@@ -101,25 +138,22 @@ class World:
 
                 # Collisions murs
                 if nx < 0 or nx >= self.cols:
-                    particle.vx *= -1 # Rebond
+                    particle.vx *= -0.95
                     nx = max(0, min(nx, self.cols - 1))
-                
                 if ny < 0 or ny >= self.rows:
-                    particle.vy *= -1 # Rebond
+                    particle.vy *= -0.95
                     ny = max(0, min(ny, self.rows - 1))
 
-                # Gestion des collisions entre particules
-                # Si la case cible est déjà occupée par une particule vivante dans next_grid
                 if next_grid[ny][nx].alive:
                     next_grid[y][x] = particle 
                 else:
                     next_grid[ny][nx] = particle
 
-        for star in self.stars:
-            self.place_star(star, middle_x, middle_y)
-            next_grid[middle_y][middle_x] = star
-
         self.grid = next_grid
+        
+        for star in self.stars:
+            self.place_star(star, star.pos_x, star.pos_y)
+
         
     
     def update(self) -> None:
