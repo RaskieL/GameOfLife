@@ -30,6 +30,8 @@ class World:
         print(f"Alive cells: {alive}, Dead cells: {total - alive}, Percentage alive: {alive / total * 100}%")
     
     def update(self) -> None:
+        to_kill = []
+        to_born = []
         for y in range(len(self.grid)):
             row = self.grid[y]
             for x in range(len(row)):
@@ -37,22 +39,27 @@ class World:
                 
                 alive_neighbours: int = 0
 
-                for kx in range(-1, 1):
-                    for ky in range(-1, 1):
+                for kx in range(-1, 2):
+                    for ky in range(-1, 2):
                         if(kx == 0 and ky == 0):
                             continue
                         nx = x + kx
                         ny = y +ky
-                        if nx >= 0 and nx < self.p_size and ny >= 0 and ny < self.p_size and self.grid[ny][nx].alive:
+                        if nx >= 0 and nx < self.cols and ny >= 0 and ny < self.rows and self.grid[ny][nx].alive:
                             alive_neighbours += 1
+                
                 match (particle.alive):
                     case True:
-                        if alive_neighbours != 3 or alive_neighbours != 2:
-                            particle.alive = False
+                        if alive_neighbours < 2 or alive_neighbours > 3:
+                            to_kill.append(particle)
                     case False:
                         if alive_neighbours == 3:
-                            particle.alive = True
+                            to_born.append(particle)
                 # end match
+        for p in to_kill:
+            p.alive = False
+        for p in to_born:
+            p.alive = True
     
     def draw(self, screen: pygame.Surface) -> None:
         # Drawing the particles

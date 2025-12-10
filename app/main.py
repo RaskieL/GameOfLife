@@ -50,7 +50,7 @@ def main() -> None:
         
         pygame.display.flip()
         
-        clock.tick(1)
+        clock.tick(2)
 
     pygame.quit()
     sys.exit()
