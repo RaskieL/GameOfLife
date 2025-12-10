@@ -12,7 +12,7 @@ class World:
         self.cols: int = p_width // p_size
         self.rows: int = p_height // p_size
         
-        self.grid: List[List[Particle]] = []
+        self.grid: List[List[Particle]] = [[Particle(False) for _ in range(self.cols)] for _ in range(self.rows)]
         self.create_empty_world()
         
     def create_empty_world(self) -> None:
