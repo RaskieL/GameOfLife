@@ -8,7 +8,7 @@ from world import World
 
 WIDTH: int = 1920
 HEIGHT: int = 1080
-SIZE : int = 20
+SIZE : int = 3
 
 def init() -> Tuple[pygame.Surface, pygame.time.Clock]:    
     print("Initialisation...")
@@ -50,7 +50,7 @@ def main() -> None:
         
         pygame.display.flip()
         
-        clock.tick(2)
+        clock.tick(60)
 
     pygame.quit()
     sys.exit()

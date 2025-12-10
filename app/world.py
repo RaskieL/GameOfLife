@@ -2,6 +2,7 @@ import pygame
 from random import random as rnd
 from typing import List
 from particle import Particle
+import numpy as np
 
 class World:
 
@@ -30,36 +31,29 @@ class World:
         print(f"Alive cells: {alive}, Dead cells: {total - alive}, Percentage alive: {alive / total * 100}%")
     
     def update(self) -> None:
-        to_kill = []
-        to_born = []
-        for y in range(len(self.grid)):
-            row = self.grid[y]
-            for x in range(len(row)):
-                particle = row[x]
-                
-                alive_neighbours: int = 0
+        current_state = np.array([[p.alive for p in row] for row in self.grid], dtype=int)
 
-                for kx in range(-1, 2):
-                    for ky in range(-1, 2):
-                        if(kx == 0 and ky == 0):
-                            continue
-                        nx = x + kx
-                        ny = y +ky
-                        if nx >= 0 and nx < self.cols and ny >= 0 and ny < self.rows and self.grid[ny][nx].alive:
-                            alive_neighbours += 1
-                
-                match (particle.alive):
-                    case True:
-                        if alive_neighbours < 2 or alive_neighbours > 3:
-                            to_kill.append(particle)
-                    case False:
-                        if alive_neighbours == 3:
-                            to_born.append(particle)
-                # end match
-        for p in to_kill:
-            p.alive = False
-        for p in to_born:
-            p.alive = True
+        # Calcul vectoriel des voisins
+        neighbors = (
+            np.roll(current_state, 1, axis=0) +
+            np.roll(current_state, -1, axis=0) +
+            np.roll(current_state, 1, axis=1) +
+            np.roll(current_state, -1, axis=1) +
+            np.roll(np.roll(current_state, 1, axis=0), 1, axis=1) +
+            np.roll(np.roll(current_state, 1, axis=0), -1, axis=1) +
+            np.roll(np.roll(current_state, -1, axis=0), 1, axis=1) +
+            np.roll(np.roll(current_state, -1, axis=0), -1, axis=1)
+        )
+
+        # Détermination du futur état (Logique booléenne)
+        next_state = ((current_state == 1) & ((neighbors == 2) | (neighbors == 3))) | ((current_state == 0) & (neighbors == 3))
+
+        # Réinjection
+        for y in range(self.rows):
+            for x in range(self.cols):
+                new_alive = bool(next_state[y, x])
+                if self.grid[y][x].alive != new_alive:
+                    self.grid[y][x].alive = new_alive
     
     def draw(self, screen: pygame.Surface) -> None:
         # Drawing the particles
