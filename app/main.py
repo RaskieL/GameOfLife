@@ -6,9 +6,9 @@ from typing import Tuple
 # imports class
 from world import World
 
-WIDTH: int = 1280
-HEIGHT: int = 760
-SIZE : int = 10
+WIDTH: int = 1920
+HEIGHT: int = 1080
+SIZE : int = 5
 
 def init() -> Tuple[pygame.Surface, pygame.time.Clock]:    
     print("Initialisation...")
@@ -53,7 +53,7 @@ def main() -> None:
         
         pygame.display.flip()
         
-        clock.tick(5)
+        clock.tick(30)
         
 
     pygame.quit()
