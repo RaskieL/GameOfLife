@@ -9,7 +9,7 @@ class World:
     COLS: int
     ROWS: int
 
-    grid: Particle[int][int]
+    grid: Particle[int][int] # ne pas stocker les particules dans la grille (perte de performance)
 
     def __init__(self, p_width: int, p_height: int, p_size: int):
         WIDTH = p_width

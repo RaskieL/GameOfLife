@@ -7,7 +7,6 @@ import world
 
 WIDTH: int = 1280
 HEIGHT: int = 720
-SIZE: int = 20
 
 WORLD: World = World(WIDTH, HEIGHT, 1)
 
