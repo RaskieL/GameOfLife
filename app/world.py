@@ -17,15 +17,17 @@ class World:
         self.init_world()
         
     def init_world(self) -> None:
+        alive_perc = 0.1
         alive = 0
         for y in range(len(self.grid)):
             row = self.grid[y]
             for x in range(len(row)):
                 particle = row[x]
-                particle.alive = True if rnd() < 0.33 else False 
+                particle.alive = True if rnd() < alive_perc else False 
                 if particle.alive:
                     alive += 1
-        print(alive)
+        total = self.cols * self.rows
+        print(f"Alive cells: {alive}, Dead cells: {total - alive}, Percentage alive: {alive / total * 100}%")
     
     def update(self) -> None:
         for y in range(len(self.grid)):

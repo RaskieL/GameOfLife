@@ -41,8 +41,7 @@ def main() -> None:
                     
 
         if not paused:
-            pass
-            #world_simulation.update()
+            world_simulation.update()
         
         screen.fill((0, 0, 0))
         world_simulation.draw(screen)
@@ -51,7 +50,7 @@ def main() -> None:
         
         pygame.display.flip()
         
-        clock.tick(60)
+        clock.tick(1)
 
     pygame.quit()
     sys.exit()
