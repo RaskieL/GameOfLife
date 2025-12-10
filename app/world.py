@@ -119,7 +119,6 @@ class World:
                     particle.ax += (dx / dist) * force
                     particle.ay += (dy / dist) * force
 
-                # limitar aceleración
                 particle.ax = max(min(particle.ax, 0.5), -0.5)
                 particle.ay = max(min(particle.ay, 0.5), -0.5)
 
@@ -134,7 +133,6 @@ class World:
                 nx = int(particle.x)
                 ny = int(particle.y)
 
-                # colisiones con bordes
                 if nx < 0 or nx >= self.cols:
                     particle.vx *= -0.95
                     nx = max(0, min(nx, self.cols - 1))
