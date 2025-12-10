@@ -6,8 +6,8 @@ from typing import Tuple
 # imports class
 from world import World
 
-WIDTH: int = 1280
-HEIGHT: int = 720
+WIDTH: int = 1920
+HEIGHT: int = 1080
 SIZE : int = 20
 
 def init() -> Tuple[pygame.Surface, pygame.time.Clock]:    
@@ -41,12 +41,13 @@ def main() -> None:
                     
 
         if not paused:
-            world_simulation.update()
+            pass
+            #world_simulation.update()
         
         screen.fill((0, 0, 0))
         world_simulation.draw(screen)
 
-        
+
         
         pygame.display.flip()
         
