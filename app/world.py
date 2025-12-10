@@ -1,5 +1,6 @@
 import pygame
 import random
+import concurrent.futures
 from typing import List
 from particle import Particle
 from star import Star
@@ -22,6 +23,8 @@ class World:
         self.particle_img = pygame.image.load("particle.jpg").convert_alpha()
         self.particle_img = pygame.transform.scale(self.particle_img, (self.p_size, self.p_size))
         
+        self.executor = concurrent.futures.ThreadPoolExecutor(max_workers=8)
+
         self.init_world()
     
     def place_star(self, star: Star, pos_x, pos_y):
@@ -93,11 +96,8 @@ class World:
             s1.pos_x = int(s1.x)
             s1.pos_y = int(s1.y)
 
-    def handle_particle_movement(self) -> None:
-        self.handle_star_physics()
-        next_grid: List[List[Particle]] = [[Particle(False, x, y) for x in range(self.cols)] for y in range(self.rows)]
-
-        for y in range(self.rows):
+    def process_movement_chunk(self, start_y, end_y, next_grid):
+        for y in range(start_y, end_y):
             for x in range(self.cols):
                 particle = self.grid[y][x]
                 
@@ -145,6 +145,18 @@ class World:
                 else:
                     next_grid[ny][nx] = particle
 
+    def handle_particle_movement(self) -> None:
+        self.handle_star_physics()
+        next_grid: List[List[Particle]] = [[Particle(False, x, y) for x in range(self.cols)] for y in range(self.rows)]
+
+        chunk_size = self.rows // 8
+        futures = []
+        for i in range(8):
+            start = i * chunk_size
+            end = (i + 1) * chunk_size if i < 7 else self.rows
+            futures.append(self.executor.submit(self.process_movement_chunk, start, end, next_grid))
+        concurrent.futures.wait(futures)
+
         self.grid = next_grid
         
         for star in self.stars:
@@ -153,6 +165,13 @@ class World:
     def update(self) -> None:
         self.calc_alivity()
         self.handle_particle_movement()
+
+    def process_alivity_chunk(self, start_y, end_y, next_state):
+        for y in range(start_y, end_y):
+            for x in range(self.cols):
+                new_alive = bool(next_state[y, x])
+                if self.grid[y][x].alive != new_alive:
+                    self.grid[y][x].alive = new_alive
         
     def calc_alivity(self) -> None:
         current_state = np.array([[p.alive for p in row] for row in self.grid], dtype=int)
@@ -170,11 +189,13 @@ class World:
 
         next_state = ((current_state == 1) & ((neighbors == 2) | (neighbors == 3))) | ((current_state == 0) & (neighbors == 3))
 
-        for y in range(self.rows):
-            for x in range(self.cols):
-                new_alive = bool(next_state[y, x])
-                if self.grid[y][x].alive != new_alive:
-                    self.grid[y][x].alive = new_alive
+        chunk_size = self.rows // 8
+        futures = []
+        for i in range(8):
+            start = i * chunk_size
+            end = (i + 1) * chunk_size if i < 7 else self.rows
+            futures.append(self.executor.submit(self.process_alivity_chunk, start, end, next_state))
+        concurrent.futures.wait(futures)
                 
     def draw(self, screen: pygame.Surface) -> None:
         for y in range(self.rows):
