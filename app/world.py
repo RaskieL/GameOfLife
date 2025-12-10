@@ -59,6 +59,6 @@ class World:
             for x in range(len(row)):
                 particle = row[x]
                 if particle.alive:
-                    pygame.draw.rect(screen, (255,255,255), pygame.Rect(y*self.p_size, x*self.p_size, self.p_size, self.p_size), 0)
+                    pygame.draw.rect(screen, (255,255,255), pygame.Rect(x*self.p_size, y*self.p_size, self.p_size, self.p_size), 0)
                 else:
                     continue
