@@ -1,15 +1,17 @@
 from random import random as rnd
+from typing import Union
 
 class Particle:
     __slots__ = ['alive', 'ax', 'ay', 'vx', 'vy', 'x', 'y']
 
-    def __init__(self, alive: bool = False, x: float = 0.0, y: float = 0.0):
-        self.alive = alive
-        self.ax = 0.0
-        self.ay = 0.0
+    def __init__(self, alive: bool = False, x: Union[int, float] = 0.0, y: Union[int, float] = 0.0) -> None:
+        self.alive: bool = alive
         
-        self.vx = (rnd() - 0.5) * 0.5
-        self.vy = (rnd() - 0.5) * 0.5
+        self.ax: float = 0.0
+        self.ay: float = 0.0
+        
+        self.vx: float = (rnd() - 0.5) * 0.5
+        self.vy: float = (rnd() - 0.5) * 0.5
 
-        self.x = float(x)
-        self.y = float(y)
+        self.x: float = float(x)
+        self.y: float = float(y)
