@@ -2,6 +2,7 @@ import pygame
 from random import random as rnd
 from typing import List
 from particle import Particle
+from star import Star
 import numpy as np
 
 class World:
@@ -27,10 +28,23 @@ class World:
                 particle.alive = True if rnd() < alive_perc else False 
                 if particle.alive:
                     alive += 1
+
+        star: Star = Star(50, 3)
+        middle_x = self.cols//2
+        middle_y = self.rows//2
+        self.grid[middle_y][middle_x] = star
+        for dx in range(-star.radius+1,star.radius):
+            for dy in range(-star.radius+1,star.radius):
+                self.grid[middle_y+dy][middle_x+dx] = Star(0,0)
+
         total = self.cols * self.rows
         print(f"Alive cells: {alive}, Dead cells: {total - alive}, Percentage alive: {alive / total * 100}%")
     
     def update(self) -> None:
+        self.calc_alivity()
+
+
+    def calc_alivity(self) -> None:
         current_state = np.array([[p.alive for p in row] for row in self.grid], dtype=int)
 
         # Calcul vectoriel des voisins
@@ -61,6 +75,10 @@ class World:
             row = self.grid[y]
             for x in range(len(row)):
                 particle = row[x]
+                if isinstance(particle, Star):
+                    pygame.draw.rect(screen, (255,255,0), pygame.Rect(x*self.p_size, y*self.p_size, self.p_size, self.p_size), 0)
+                    continue
+
                 if particle.alive:
                     pygame.draw.rect(screen, (255,255,255), pygame.Rect(x*self.p_size, y*self.p_size, self.p_size, self.p_size), 0)
                 else:

@@ -8,7 +8,7 @@ from world import World
 
 WIDTH: int = 1280
 HEIGHT: int = 760
-SIZE : int = 2
+SIZE : int = 10
 
 def init() -> Tuple[pygame.Surface, pygame.time.Clock]:    
     print("Initialisation...")
