@@ -26,7 +26,7 @@ class World:
         self.particle_img: pygame.Surface = pygame.image.load("particle.jpg").convert_alpha()
         self.particle_img = pygame.transform.scale(self.particle_img, (self.p_size, self.p_size))
         
-        self.executor = concurrent.futures.ThreadPoolExecutor(max_workers=8)
+        self.executor = concurrent.futures.ThreadPoolExecutor(max_workers=16)
 
         self.init_world()
     
@@ -201,9 +201,9 @@ class World:
 
         next_state: np.ndarray = ((current_state == 1) & ((neighbors == 2) | (neighbors == 3))) | ((current_state == 0) & (neighbors == 3))
 
-        chunk_size = self.rows // 8
+        chunk_size = self.rows // 16
         futures = []
-        for i in range(8):
+        for i in range(16):
             start = i * chunk_size
             end = (i + 1) * chunk_size if i < 7 else self.rows
             futures.append(self.executor.submit(self.process_alivity_chunk, start, end, next_state))
