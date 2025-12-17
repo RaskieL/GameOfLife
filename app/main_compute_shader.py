@@ -8,7 +8,7 @@ from typing import Tuple
 # Constants
 WIDTH: int = 1280
 HEIGHT: int = 720
-SIZE: int = 5
+SIZE: int = 1
 COLS: int = WIDTH // SIZE
 ROWS: int = HEIGHT // SIZE
 
@@ -20,13 +20,6 @@ layout(local_size_x = 16, local_size_y = 16) in;
 layout(rgba32f, binding = 0) uniform image2D current_grid;
 layout(rgba32f, binding = 1) uniform image2D next_grid;
 
-struct Star {
-    vec2 pos;
-    float mass;
-};
-
-uniform Star stars[3];
-uniform int num_stars;
 uniform vec2 grid_size;
 
 // Random function for initialization if needed, but we init in Python
@@ -81,20 +74,7 @@ void main() {
         float ax = 0.0;
         float ay = 0.0;
         
-        for (int i = 0; i < num_stars; i++) {
-            vec2 d = stars[i].pos - current_pos_f;
-            float dist_sq = dot(d, d);
-            float dist = sqrt(dist_sq);
-            
-            if (dist < 10.0) dist = 10.0;
-            
-            float force = stars[i].mass / dist_sq;
-            ax += (d.x / dist) * force;
-            ay += (d.y / dist) * force;
-        }
-        
-        ax = clamp(ax, -0.5, 0.5);
-        ay = clamp(ay, -0.5, 0.5);
+        // No stars, so no gravity forces
         
         new_vx += ax;
         new_vy += ay;
@@ -143,17 +123,23 @@ void main() {
 FRAGMENT_SHADER = """
 #version 330
 uniform sampler2D tex;
+uniform vec2 resolution;
+
 in vec2 v_texcoord;
 out vec4 f_color;
 void main() {
     vec4 data = texture(tex, v_texcoord);
+    vec4 color;
+    
     if (data.r > 0.5) {
         // Alive color (white/particle texture approximation)
-        f_color = vec4(1.0, 1.0, 1.0, 1.0); 
+        color = vec4(1.0, 1.0, 1.0, 1.0); 
     } else {
         // Dead color (black)
-        f_color = vec4(0.0, 0.0, 0.0, 1.0);
+        color = vec4(0.0, 0.0, 0.0, 1.0);
     }
+    
+    f_color = color;
 }
 """
 
@@ -195,17 +181,14 @@ class WorldCompute:
         # Star(1, 3, ...) -> mass 500
         # Star(0.5, 2, ...) -> mass 250
         self.stars = [
-            {'pos': (np.random.randint(0, width), np.random.randint(0, height)), 'mass': 1000.0},
-            {'pos': (np.random.randint(0, width), np.random.randint(0, height)), 'mass': 500.0},
-            {'pos': (np.random.randint(0, width), np.random.randint(0, height)), 'mass': 250.0}
+            {'pos': [np.random.randint(0, width), np.random.randint(0, height)], 'mass': 1000.0, 'radius': 20.0, 'vx': 0.0, 'vy': 0.0, 'ax': 0.0, 'ay': 0.0},
+            {'pos': [np.random.randint(0, width), np.random.randint(0, height)], 'mass': 500.0, 'radius': 15.0, 'vx': 0.0, 'vy': 0.0, 'ax': 0.0, 'ay': 0.0},
+            {'pos': [np.random.randint(0, width), np.random.randint(0, height)], 'mass': 250.0, 'radius': 10.0, 'vx': 0.0, 'vy': 0.0, 'ax': 0.0, 'ay': 0.0}
         ]
         
         # Set uniforms
         self.compute_shader['grid_size'] = (width, height)
-        self.compute_shader['num_stars'] = len(self.stars)
-        for i, star in enumerate(self.stars):
-            self.compute_shader[f'stars[{i}].pos'] = star['pos']
-            self.compute_shader[f'stars[{i}].mass'] = star['mass']
+        self.compute_shader['grid_size'] = (width, height)
 
     def update(self):
         # Clear destination texture (important for scatter)
@@ -224,11 +207,6 @@ class WorldCompute:
         self.texture_a.bind_to_image(0, read=True, write=False)
         self.texture_b.bind_to_image(1, read=False, write=True)
         
-        # Update stars uniforms (they move in original, but here let's keep them static or move them simply)
-        # For this variant, let's keep stars static or simple bounce
-        # (Implementing star physics on CPU is fine)
-        self.update_stars()
-        
         # Dispatch
         gw = int(np.ceil(self.width / 16))
         gh = int(np.ceil(self.height / 16))
@@ -237,23 +215,13 @@ class WorldCompute:
         # Swap textures
         self.texture_a, self.texture_b = self.texture_b, self.texture_a
 
-    def update_stars(self):
-        # Simple movement for stars to make it dynamic
-        for i, star in enumerate(self.stars):
-            # Just wiggle them or something, or implement full physics if needed.
-            # For brevity, let's keep them static or just update uniform if we changed them.
-            # If we want to match original, we need star-star physics.
-            # Let's skip star-star physics for this shader variant to keep it simple, 
-            # as the user asked for "variant using compute shader".
-            self.compute_shader[f'stars[{i}].pos'] = star['pos']
-
     def render(self, prog, vao):
+        # Update render uniforms
+        if 'resolution' in prog:
+            prog['resolution'] = (self.width, self.height)
+            
         self.texture_a.use(0)
         vao.render(moderngl.TRIANGLE_STRIP)
-        
-        # Draw stars (optional, using pygame or another shader)
-        # Since we are rendering to a texture, we can't easily mix pygame drawing ON TOP of the texture 
-        # unless we blit the texture to screen first.
 
 def init() -> Tuple[pygame.Surface, pygame.time.Clock]:    
     print("Initialisation (Compute Shader)...")
@@ -310,7 +278,7 @@ def main() -> None:
         world_sim.render(prog, vao)
         
         pygame.display.flip()
-        clock.tick(60) # Can run faster now
+        clock.tick(60)
 
     pygame.quit()
     sys.exit()
